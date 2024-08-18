@@ -199,7 +199,10 @@ function lhHelpPlayers()
                     log.info("[LowbieHelper:lhHelpPlayers]  Blessed "..pid..","..v[2].." with 25k RP (1 time)".."  timesHelped="..v[3])
                     gui.show_message("LowbieHelper:lhHelpPlayers", "Helped "..targetPlayerName.." with 25k / RP (1 time)".."  timesHelped="..v[3])
                     if lhAnnounce:is_enabled() and v[3] == 0 then
-                        network.send_chat_message_to_player(pid, "[LowbieHelper]  "..targetPlayerName..", You have been blessed with RP + 25k (1 time)!")
+                        network.send_chat_message_to_player(pid, "[LowbieHelper]  "..targetPlayerName..", You have been blessed with RP + 25k, and all weapons! (1 time)!")
+                    end
+                    if v[3] == 0 then
+                        lhGiveWeapons(pid)
                     end
                     --sleep(1)
                 end)
@@ -208,10 +211,12 @@ function lhHelpPlayers()
                 -- TODO
                     log.info("[LowbieHelper:lhHelpPlayers]  NEEDS RP "..pid..","..v[2].."  targetPlayerRank: "..targetPlayerRank.."  timesHelped="..v[3])
                     gui.show_message("LowbieHelper:lhHelpPlayers", "NEEDS RP "..targetPlayerName.."  targetPlayerRank: "..targetPlayerRank.."  timesHelped="..v[3])
+                    if v[3] == 0 then
+                        lhGiveWeapons(pid)
+                    end
             end
             -- TODO set timesHelped
             local timesHelped = v[3]+1
-            -- remove the player helped from the array
             -- TEST move current item to the end of the array
             table.remove(helpPlayers,k)
             table.insert(helpPlayers, {pid,targetPlayerName,timesHelped})
@@ -219,6 +224,23 @@ function lhHelpPlayers()
         -- only run once, TODO fix
         return
     end
+end
+
+function lhGiveWeapons(pid)
+    script.run_in_fiber(function(giveWeap)
+        -- sleep until next game frame
+        giveWeap:yield()
+        local playerID = pid or network.get_selected_player()
+        local ent = PLAYER.GET_PLAYER_PED(playerID)
+        local out = "Successfully gave all weapons to "..PLAYER.GET_PLAYER_NAME(playerID)
+        if ENTITY.DOES_ENTITY_EXIST(ent) and not ENTITY.IS_ENTITY_DEAD(ent, false) then
+            for _, name in ipairs(weaponNamesString) do
+                local weaponHash = MISC.GET_HASH_KEY(name)
+                WEAPON.GIVE_WEAPON_TO_PED(ent, weaponHash, 9999, false, true)
+                gui.show_message('Weapons', out)
+            end
+        end
+    end)
 end
 
 
@@ -291,6 +313,11 @@ lh_gui:add_button("Give Ammo", function()
 end)
 toolTip(lh_gui, "Gives players ammo [NYI]")
 
+lh_gui:add_sameline()
+lh_gui:add_button("Give All Weapons", function()
+    lhGiveWeapons()
+end)
+toolTip(Weapons, "Gives all weapons to the selected player")
 
 lh_gui:add_separator()
 createText(lh_gui, "Loops:")
@@ -366,3 +393,38 @@ event.register_handler(menu_event.PlayerMgrShutdown, function ()
     helpPlayers = 'nil'
     helpPlayers = {}
 end)
+
+
+
+
+
+-- Weapons List - All weapons
+weaponNamesString = {
+    "weapon_dagger", "weapon_bat", "weapon_bottle", "weapon_crowbar",
+    "weapon_unarmed", "weapon_flashlight", "weapon_golfclub", "weapon_hammer",
+    "weapon_hatchet", "weapon_knuckle", "weapon_knife", "weapon_machete",
+    "weapon_switchblade", "weapon_nightstick", "weapon_wrench", "weapon_battleaxe",
+    "weapon_poolcue", "weapon_stone_hatchet", "weapon_pistol", "weapon_pistol_mk2",
+    "weapon_combatpistol", "weapon_appistol", "weapon_stungun", "weapon_stunrod", "weapon_pistol50",
+    "weapon_snspistol", "weapon_snspistol_mk2", "weapon_heavypistol", "weapon_vintagepistol",
+    "weapon_flaregun", "weapon_marksmanpistol", "weapon_revolver", "weapon_revolver_mk2",
+    "weapon_doubleaction", "weapon_raypistol", "weapon_ceramicpistol", "weapon_navyrevolver",
+    "weapon_microsmg", "weapon_smg", "weapon_smg_mk2", "weapon_assaultsmg",
+    "weapon_combatpdw", "weapon_machinepistol", "weapon_minismg", "weapon_raycarbine",
+    "weapon_pumpshotgun", "weapon_pumpshotgun_mk2", "weapon_sawnoffshotgun", "weapon_assaultshotgun",
+    "weapon_bullpupshotgun", "weapon_musket", "weapon_heavyshotgun", "weapon_dbshotgun",
+    "weapon_autoshotgun", "weapon_assaultrifle", "weapon_assaultrifle_mk2", "weapon_carbinerifle",
+    "weapon_carbinerifle_mk2", "weapon_advancedrifle", "weapon_specialcarbine", "weapon_specialcarbine_mk2",
+    "weapon_bullpuprifle", "weapon_bullpuprifle_mk2", "weapon_compactrifle", "weapon_mg",
+    "weapon_combatmg", "weapon_combatmg_mk2", "weapon_gusenberg", "weapon_sniperrifle",
+    "weapon_heavysniper", "weapon_heavysniper_mk2", "weapon_marksmanrifle", "weapon_marksmanrifle_mk2",
+    "weapon_rpg", "weapon_grenadelauncher", "weapon_grenadelauncher_smoke", "weapon_minigun",
+    "weapon_firework", "weapon_railgun", "weapon_hominglauncher", "weapon_compactlauncher",
+    "weapon_rayminigun", "weapon_grenade", "weapon_bzgas", "weapon_smokegrenade",
+    "weapon_flare", "weapon_molotov", "weapon_stickybomb", "weapon_proxmine",
+    "weapon_snowball", "weapon_pipebomb", "weapon_ball", "weapon_petrolcan",
+    "weapon_fireextinguisher", "weapon_hazardcan", "weapon_militaryrifle",
+    "weapon_combatshotgun", "weapon_gadgetpistol", "WEAPON_SNOWLAUNCHER", "WEAPON_BATTLERIFLE",
+    "WEAPON_TECPISTOL", "WEAPON_CANDYCANE", "WEAPON_PISTOLXM3", "WEAPON_RAILGUNXM3", "WEAPON_PRECISIONRIFLE",
+    "WEAPON_TACTICALRIFLE", "WEAPON_EMPLAUNCHER", "WEAPON_HEAVYRIFLE"
+}
